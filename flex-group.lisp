@@ -174,21 +174,17 @@
          (-resize second-frame :width second-width
                                :height (height frame)))))))
 
-;; TODO: Does this function need to exist?
-(defun make-split-flex-frame (&rest args &key first-frame second-frame
-                              &allow-other-keys)
-  (let ((frame (apply 'make-instance 'split-flex-frame :allow-other-keys t args)))
-    (push (or second-frame
-              (make-instance 'simple-flex-frame
-                             :parent frame))
+(defmethod initialize-instance :after ((frame split-flex-frame)
+                                       &key &allow-other-keys)
+  (unless (children frame)
+    (push (make-instance 'simple-flex-frame
+                         :parent frame)
           (children frame))
-    (push (or first-frame
-              (make-instance 'simple-flex-frame
-                             :parent frame))
+    (push (make-instance 'simple-flex-frame
+                         :parent frame)
           (children frame))
     (update-split frame)
-    (setf (focused frame) (first (children frame)))
-    frame))
+    (setf (focused frame) (first (children frame)))))
 
 (defmethod -resize :after ((frame split-flex-frame) &key width height)
   (declare (ignore width height))
