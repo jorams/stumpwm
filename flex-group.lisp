@@ -155,24 +155,24 @@
     (move first-frame :x (x frame) :y (y frame))
     (case (split-direction frame)
       (:horizontal
-       (-resize first-frame :width (width frame)
-                            :height (floor (* (height frame)
-                                              (split-ratio frame))))
-       (move second-frame :x (x frame)
-                          :y (+ (y frame) (floor (* (height frame)
-                                                    (split-ratio frame)))))
-       (-resize second-frame :width (width frame)
-                             :height (floor (* (height frame)
-                                               (- 1 (split-ratio frame))))))
+       (let* ((first-height (floor (* (height frame)
+                                      (split-ratio frame))))
+              (second-height (- (height frame) first-height)))
+         (-resize first-frame :width (width frame)
+                              :height first-height)
+         (move second-frame :x (x frame)
+                            :y (+ (y frame) first-height))
+         (-resize second-frame :width (width frame)
+                               :height second-height)))
       (:vertical
-       (-resize first-frame :width (floor (* (split-ratio frame) (width frame)))
-                            :height (height frame))
-       (move second-frame :x (+ (x frame) (floor (* (width frame)
-                                                    (split-ratio frame))))
-                          :y (y frame))
-       (-resize second-frame :width (floor (* (- 1 (split-ratio frame))
-                                              (width frame)))
-                             :height (height frame))))))
+       (let* ((first-width (floor (* (split-ratio frame) (width frame))))
+              (second-width (- (width frame) first-width)))
+         (-resize first-frame :width first-width
+                              :height (height frame))
+         (move second-frame :x (+ (x frame) first-width)
+                            :y (y frame))
+         (-resize second-frame :width second-width
+                               :height (height frame)))))))
 
 ;; TODO: Does this function need to exist?
 (defun make-split-flex-frame (&rest args &key first-frame second-frame
