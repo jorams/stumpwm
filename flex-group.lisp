@@ -236,6 +236,9 @@
                     (+ (y frame) (height frame))))
   (mapc 'outline (children frame)))
 
+(defmethod outline :after (object &optional screen)
+  (reset-frame-indicator-timer))
+
 (defmethod outline ((window flex-window) &optional (screen (current-screen)))
   (declare (ignore screen)))
 
