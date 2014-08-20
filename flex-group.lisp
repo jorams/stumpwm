@@ -272,14 +272,14 @@
                   (< (y child) y (+ (y child) (height child)))))
            (children group)))
 
-(defun current-head (group)
+(defun current-flex-head (group)
   (let ((focus (focused group)))
     (if (typep focus 'flex-head)
         focus
         (find-head group (window-x focus) (window-y focus)))))
 
 (defmethod group-current-head ((group flex-group))
-  (head (current-head group)))
+  (head (current-flex-head group)))
 
 (defmethod group-resize-request ((group flex-group) window width height))
 (defmethod group-move-request ((group flex-group) window x y relative-to))
