@@ -136,6 +136,69 @@
   (when (next-method-p) (call-next-method)))
 
 
+;;; Split frames
+
+(defclass split-flex-frame (flex-frame)
+  ((split-ratio :initarg :ratio
+                :initform 1/2
+                :accessor split-ratio)
+   (split-direction :initarg :direction
+                    :initform :horizontal
+                    :accessor split-direction)))
+
+;; TODO: This function is a mess
+(defun update-split (frame)
+  (destructuring-bind (first-frame second-frame)
+      (children frame)
+    (move first-frame :x (x frame) :y (y frame))
+    (case (split-direction frame)
+      (:horizontal
+       (-resize first-frame :width (width frame)
+                            :height (floor (* (height frame)
+                                              (split-ratio frame))))
+       (move second-frame :x (x frame)
+                          :y (+ (y frame) (floor (* (height frame)
+                                                    (split-ratio frame)))))
+       (-resize second-frame :width (width frame)
+                             :height (floor (* (height frame)
+                                               (- 1 (split-ratio frame))))))
+      (:vertical
+       (-resize first-frame :width (floor (* (split-ratio frame) (width frame)))
+                            :height (height frame))
+       (move second-frame :x (+ (x frame) (floor (* (width frame)
+                                                    (split-ratio frame))))
+                          :y (y frame))
+       (-resize second-frame :width (floor (* (- 1 (split-ratio frame))
+                                              (width frame)))
+                             :height (height frame))))))
+
+;; TODO: Does this function need to exist?
+(defun make-split-flex-frame (&rest args &key first-frame second-frame
+                              &allow-other-keys)
+  (let ((frame (apply 'make-instance 'split-flex-frame :allow-other-keys t args)))
+    (push (or second-frame
+              (make-instance 'simple-flex-frame
+                             :parent frame))
+          (children frame))
+    (push (or first-frame
+              (make-instance 'simple-flex-frame
+                             :parent frame))
+          (children frame))
+    (update-split frame)
+    (setf (focused frame) (first (children frame)))
+    frame))
+
+(defmethod -resize :after ((frame split-flex-frame) &key width height)
+  (declare (ignore width height))
+  (update-split frame)
+  (when (next-method-p) (call-next-method)))
+
+(defmethod move :after ((frame split-flex-frame) &key x y)
+  (declare (ignore x y))
+  (update-split frame)
+  (when (next-method-p) (call-next-method)))
+
+
 ;;; Utilities
 
 (defgeneric outline (object &optional screen))
