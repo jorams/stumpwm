@@ -97,16 +97,19 @@
 (defmethod hide ((frame flex-frame))
   (mapc 'hide (children frame)))
 
-(defmethod -resize ((window flex-window) &key (width (window-width window))
-                                           (height (window-height window)))
+(defmethod -resize ((window flex-window) &key width height)
   (with-accessors ((xwin window-xwin) (parent window-parent))
       window
-    (setf (xlib:drawable-width parent) (+ (xlib:drawable-x xwin) width)
-          (xlib:drawable-width xwin) width
-          (window-width window) width)
-    (setf (xlib:drawable-height parent) (+ (xlib:drawable-y xwin) height)
-          (xlib:drawable-height xwin) height
-          (window-height window) height)))
+    (xlib:with-state (parent)
+      (xlib:with-state (xwin)
+        (when width
+          (setf (xlib:drawable-width parent) (+ (xlib:drawable-x xwin) width)
+                (xlib:drawable-width xwin) width
+                (window-width window) width))
+        (when height
+          (setf (xlib:drawable-height parent) (+ (xlib:drawable-y xwin) height)
+                (xlib:drawable-height xwin) height
+                (window-height window) height))))))
 
 (defmethod -resize ((frame flex-frame) &key width height)
   (when width (setf (width frame) width))
@@ -116,16 +119,15 @@
   (when (focused frame) (-resize (focused frame) :width width :height height))
   (when (next-method-p) (call-next-method)))
 
-(defmethod move ((window flex-window) &key (x (window-x window))
-                                        (y (window-y window)))
+(defmethod move ((window flex-window) &key x y)
   (with-accessors ((xwin window-xwin) (parent window-parent))
       window
     (xlib:with-state (parent)
       (xlib:with-state (xwin)
-        (setf (xlib:drawable-x parent) x
-              (window-x window) x)
-        (setf (xlib:drawable-y parent) y
-              (window-y window) y)))))
+        (when x (setf (xlib:drawable-x parent) x
+                      (window-x window) x))
+        (when y (setf (xlib:drawable-y parent) y
+                      (window-y window) y))))))
 
 (defmethod move ((frame flex-frame) &key x y)
   (when x (setf (x frame) x))
